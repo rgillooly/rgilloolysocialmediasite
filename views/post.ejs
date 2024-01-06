@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/style.css">
+    <title><%= post.title %></title>
+</head>
+
+<%- include("./partials/navbar.ejs") %>
+
+<body>
+    <h1><%= post.title %></h1>
+    <p><%= post.body %></p>
+
+    <h2>Comments</h2>
+    <ul>
+        <% post.comments.forEach(comment => { %>
+            <li><%= comment.body %></li>
+        <% }); %>
+    </ul>
+
+    <form action="/blog/<%= post._id %>/comment" method="post">
+        <label for="commentBody">Add Comment:</label>
+        <input type="text" id="commentBody" name="commentBody" required>
+        <button type="submit">Submit Comment</button>
+    </form>
+</body>
+</html>

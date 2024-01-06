@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" type="text/css" href="/style.css">
+    <title>New Blog Post</title>
+</head>
+
+<%- include("./partials/navbar.ejs") %>
+
+<body>
+    <h1>New Blog Post</h1>
+    <form action="/blog/new" method="post">
+        <label for="title">Title:</label>
+        <input type="text" id="title" name="title" required>
+
+        <label for="body">Body:</label>
+        <textarea id="body" name="body" rows="4" required></textarea>
+
+        <button type="submit">Create Post</button>
+    </form>
+</body>
+</html>

@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, intial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="style.css">
+  <title>Blog</title>
+</head>
+
+<%- include("./partials/navbar.ejs") %>
+
+<h1 class="center">Blog Posts</h1>
+    <h1 class="center2">Blog</h1>
+    <ul class="center2">
+        <% posts.forEach(post => { %>
+            <li>
+                <h2><a href="/blog/<%= post._id %>"><%= post.title %></a></h2>
+                <p><%= post.body %></p>
+            </li>
+        <% }); %>
+    </ul>
+</body>
+</html>
+
+<p class="center2"> End of Posts! If you see this text, there are no more posts here!</p>
+</body>
+
+</html>
