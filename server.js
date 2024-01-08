@@ -21,15 +21,21 @@ app.use(session({
     saveUninitialized: false
   }));
 
-// Use passport middleware
+// Initialize Passport
 app.use(passport.initialize());
 app.use(passport.session());
 app.use(express.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+    res.locals.currentUser = req.user;
+    next();
+  });
+
 // Define Mongoose schema for User
 const userSchema = new mongoose.Schema({
   username: String,
-  password: String
+  password: String,
+  friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
 });
 
 // Plugin passport-local-mongoose to User schema
@@ -38,7 +44,11 @@ userSchema.plugin(passportLocalMongoose);
 // Create User model
 const User = mongoose.model('User', userSchema);
 
-// Set passport strategy
+app.use((req, res, next) => {
+    res.locals.currentUser = req.user;
+    next();
+  });
+
 // Set passport strategy
 passport.use(new LocalStrategy(User.authenticate()));
 passport.serializeUser((user, done) => {
@@ -124,8 +134,8 @@ app.post('/blog', async (req, res) => {
         console.error(error);
         res.status(500).json({ error: 'Internal Server Error' });
       }
-    });  
-
+    }); 
+    
 // Route to render the login form
 app.get('/login', (req, res) => {
     res.render('login');
@@ -142,9 +152,19 @@ app.get('/login', (req, res) => {
     if (req.isAuthenticated()) {
       return next();
     }
-    res.redirect('/login');
+    res.redirect('/login'); // Redirect to the login page if not authenticated
   }
   
+  app.get('/logout', (req, res) => {
+    req.logout((err) => {
+      if (err) {
+        console.error(err);
+        return res.status(500).send('Internal Server Error');
+      }
+      res.redirect('/login');
+    });
+  });
+
 // Route to render the form for creating a new blog post (requires authentication)
 app.get('/blog/new', isLoggedIn, (req, res) => {
     res.render('newpost');
@@ -173,55 +193,48 @@ app.get('/blog/new', isLoggedIn, (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
     }
   });
-  
-  // Route to render the form for creating a new comment (requires authentication)
-  app.get('/comment/new', isLoggedIn, (req, res) => {
-    res.render('newcomment');
-  });
-  
-  // Route to handle creating a new comment
-  app.post('/comment/new', isLoggedIn, async (req, res) => {
-    // ... (previous code to create a new comment)
-  });
-  
-  // Route to render the registration form
-app.get('/register', (req, res) => {
-    res.render('register');
-  });
-  
-// Route to handle user registration logic
-app.post('/register', async (req, res) => {
+
+ // Profile page route
+app.get('/profile/:userId', async (req, res) => {
     try {
-      const { username, password } = req.body;
+      const userId = req.params.userId;
+      const userProfile = await User.findById(userId).populate('friends');
   
-      // Create a new user instance
-      const newUser = new User({ username });
-  
-      // Set the password for the user
-      newUser.setPassword(password, async () => {
-        try {
-          // Save the user to the database
-          await newUser.save();
-  
-          // Log in the newly registered user
-          req.login(newUser, (loginErr) => {
-            if (loginErr) {
-              console.error(loginErr);
-              return res.status(500).json({ error: 'Internal Server Error' });
-            }
-  
-            return res.redirect('/blog');
-          });
-        } catch (saveError) {
-          console.error(saveError);
-          res.status(500).json({ error: 'Internal Server Error' });
-        }
-      });
+      res.render('profile', { currentUser: req.user, userProfile });
     } catch (error) {
       console.error(error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      res.status(500).send('Internal Server Error');
     }
   });
+  
+  app.post('/profile/:username/add-friend', isLoggedIn, async (req, res) => {
+    try {
+      const username = req.params.username;
+      const friendUsername = req.body.friendUsername;
+  
+      // Find the user by username
+      const user = await User.findOne({ username: username });
+  
+      if (!user) {
+        return res.status(404).json({ error: 'User not found' });
+      }
+  
+      // Find the friend by username
+      const friend = await User.findOne({ username: friendUsername });
+  
+      if (!friend) {
+        return res.status(404).json({ error: 'Friend not found' });
+      }
+  
+      // Add friend to user's friends list
+      await User.findByIdAndUpdate(user._id, { $addToSet: { friends: friend._id } });
+  
+      res.redirect(`/profile/${username}`);
+    } catch (error) {
+      console.error(error);
+      res.status(500).send('Internal Server Error');
+    }
+});
 
   // Route to handle adding a comment to a specific post
 app.post('/blog/:postId/comment', isLoggedIn, async (req, res) => {
@@ -269,7 +282,7 @@ app.get('/blog/:postId', async (req, res) => {
       res.status(500).json({ error: 'Internal Server Error' });
     }
   });  
-    
+
 // Start the Express server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);

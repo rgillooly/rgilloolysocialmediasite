@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" type="text/css" href="/style.css">
+  <title><%= userProfile.username %>'s Profile</title>
+</head>
+
+<%- include("./partials/navbar.ejs") %>
+
+<body>
+  <h1><%= userProfile.username %>'s Profile</h1>
+
+  <h2>Friends:</h2>
+  <ul>
+    <% userProfile.friends.forEach(friend => { %>
+      <li><%= friend.username %></li>
+    <% }); %>
+  </ul>
+
+  <h2>Add Friend:</h2>
+  <form action="/profile/<%= userProfile.username%>/add-friend" method="post">
+    <label for="friendUsername">Friend's Username:</label>
+    <input type="text" id="friendUsername" name="friendUsername" required>
+    <button type="submit">Add Friend</button>
+  </form>
+</body>
+</html>
