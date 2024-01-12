@@ -283,6 +283,30 @@ app.get('/blog/:postId', async (req, res) => {
     }
   });  
 
+  // Render the registration form
+app.get('/register', (req, res) => {
+  res.render('register');
+});
+
+app.post('/register', async (req, res) => {
+    try {
+        const { username, password } = req.body;
+
+        // Create a new user
+        const newUser = new User({ username });
+
+        // Register the user with Passport
+        await User.register(newUser, password);
+
+        // Redirect to the login page after successful registration
+        res.redirect('/login');
+    } catch (error) {
+        console.error(error);
+        // Handle registration error, e.g., username already exists
+        res.redirect('/register');
+    }
+});
+
 // Start the Express server
 app.listen(port, () => {
   console.log(`Server is running on http://localhost:${port}`);
